@@ -1,0 +1,860 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Навигатор компетенций Абилимпикс</title>
+<style>
+    :root { --base-font: 15px; }
+    * { margin: 0; padding: 0; box-sizing: border-box; font-family: Arial, sans-serif; }
+    body { background: #0540f2; min-height: 100vh; padding: 20px 15px; font-size: var(--base-font); transition: font-size 0.2s; }
+    .container { background: #fff; border-radius: 15px; max-width: 960px; margin: 0 auto; padding: 25px; }
+
+    /* === Панель доступности === */
+    .access-bar { display: flex; flex-wrap: wrap; gap: 8px; justify-content: flex-end; max-width: 960px; margin: 0 auto 10px; }
+    .access-bar button { width: auto; margin: 0; padding: 8px 14px; font-size: 14px; border-radius: 8px; background: #fff; color: #0540f2; border: 2px solid #fff; }
+    .access-bar button:hover { background: #e8f0fe; }
+    .access-bar .eye { background: #ffff00; color: #000; border-color: #ffff00; font-weight: bold; }
+    .access-bar .eye.active { background: #000; color: #ffff00; border-color: #ffff00; }
+
+    /* === Режим для слабовидящих === */
+    body.eye-mode { background: #000; }
+    body.eye-mode .container { background: #111; color: #ffff00; }
+    body.eye-mode h1, body.eye-mode h2, body.eye-mode h3, body.eye-mode h4, body.eye-mode label, body.eye-mode p, body.eye-mode li, body.eye-mode span, body.eye-mode strong { color: #ffff00 !important; }
+    body.eye-mode select, body.eye-mode input, body.eye-mode textarea { background: #222 !important; color: #ffff00 !important; border-color: #ffff00 !important; }
+    body.eye-mode button { background: #000 !important; color: #ffff00 !important; border: 2px solid #ffff00 !important; }
+    body.eye-mode button:hover { background: #333 !important; }
+    body.eye-mode .brand-header { background: #000 !important; border: 2px solid #ffff00; }
+    body.eye-mode .brand-header h1, body.eye-mode .brand-header p { color: #ffff00 !important; text-shadow: none; }
+    body.eye-mode .note, body.eye-mode .access-block, body.eye-mode .mentor-block, body.eye-mode .guide-block, body.eye-mode .modules-block, body.eye-mode .q-item, body.eye-mode .score-box { background: #111 !important; border-color: #ffff00 !important; }
+    body.eye-mode .tabs button { background: #000 !important; color: #ffff00 !important; border-color: #ffff00 !important; }
+    body.eye-mode .tabs button.active { background: #ffff00 !important; color: #000 !important; }
+    body.eye-mode table, body.eye-mode th, body.eye-mode td { border-color: #ffff00 !important; color: #ffff00 !important; }
+    body.eye-mode .official { color: #ffff00 !important; border-color: #ffff00 !important; background: #000 !important; }
+
+    .brand-header { text-align: center; padding: 20px; margin-bottom: 20px; border-radius: 12px;
+        background: linear-gradient(135deg, #c9d7f2 0%, #4b83f2 50%, #0540f2 100%); color: #fff; }
+    .brand-header h1 { font-size: 24px; margin-bottom: 6px; }
+    .brand-header p { font-size: 14px; opacity: 0.95; }
+    .brand-colors { display: flex; justify-content: center; gap: 8px; margin-top: 12px; }
+    .brand-colors span { width: 30px; height: 8px; border-radius: 4px; display: inline-block; }
+
+    label { display: block; font-weight: bold; margin-top: 14px; margin-bottom: 5px; color: #333; }
+    select, input[type=text], input[type=date], textarea {
+        width: 100%; padding: 10px; border: 2px solid #c9d7f2; border-radius: 8px; font-size: 15px; background: #fff; font-family: Arial, sans-serif;
+    }
+    select:focus, input:focus, textarea:focus { border-color: #0540f2; outline: none; }
+    textarea { min-height: 70px; resize: vertical; }
+    button { width: 100%; padding: 12px; background: #0540f2; color: #fff; border: none; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer; margin-top: 14px; }
+    button:hover { background: #4b83f2; }
+    button.green { background: #009f7a; }
+
+button.green:hover { background: #00b88d; }
+    button.red { background: #e83845; }
+    button.red:hover { background: #f05060; }
+    button.gray { background: #666; }
+    button.gray:hover { background: #888; }
+    button.pdf-btn { background: #e83845; margin-top: 12px; }
+    button.pdf-btn:hover { background: #f05060; }
+
+    #result { display: none; margin-top: 25px; }
+    .tabs { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 15px; }
+    .tabs button { flex: 1 1 150px; padding: 10px; background: #e8f0fe; color: #0540f2; font-weight: bold; margin: 0; font-size: 14px; }
+    .tabs button.active { background: #0540f2; color: #fff; }
+    .tab-content { display: none; background: #f5f8ff; border-left: 5px solid #0540f2; border-radius: 10px; padding: 20px; }
+    .tab-content.active { display: block; }
+    .tab-content h2 { color: #0540f2; margin-bottom: 8px; font-size: 20px; }
+    .tab-content h3 { color: #e83845; margin-top: 16px; margin-bottom: 8px; font-size: 16px; }
+    .tab-content h4 { color: #0540f2; margin-top: 12px; margin-bottom: 6px; font-size: 15px; }
+    .tab-content ul { margin-left: 20px; line-height: 1.7; }
+    .tab-content li { margin-bottom: 5px; }
+    .meta { color: #666; font-size: 14px; margin-bottom: 10px; }
+    .note { background: #fff8e1; border-left: 4px solid #009f7a; padding: 12px; border-radius: 6px; margin-top: 15px; font-size: 14px; }
+    .access-block { background: #e8f0fe; border-left: 4px solid #4b83f2; padding: 12px; border-radius: 6px; margin-top: 12px; font-size: 14px; }
+    .mentor-block { background: #e6f7ee; border-left: 4px solid #009f7a; padding: 12px; border-radius: 6px; margin-top: 10px; font-size: 14px; }
+    .guide-block { background: #f5f0ff; border-left: 4px solid #7b3ff2; padding: 12px; border-radius: 6px; margin-top: 10px; font-size: 14px; }
+    .modules-block { background: #fff2f2; border-left: 4px solid #e83845; padding: 12px; border-radius: 6px; margin-top: 10px; font-size: 14px; }
+    .q-item { background: #fff; border: 1px solid #c9d7f2; border-radius: 8px; padding: 12px; margin-bottom: 10px; }
+    .q-item p { font-weight: bold; margin-bottom: 8px; color: #333; }
+    .q-item label { display: inline-block; font-weight: normal; margin: 0 12px 0 0; cursor: pointer; color: #444; }
+    .q-item input { margin-right: 5px; }
+    .score-box { background: #0540f2; color: #fff; padding: 18px; border-radius: 10px; text-align: center; margin: 15px 0; }
+    .score-box .score { font-size: 32px; font-weight: bold; }
+    .score-box .level { font-size: 15px; margin-top: 6px; }
+    table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 14px; }
+    th, td { border: 1px solid #c9d7f2; padding: 8px; text-align: left; vertical-align: top; }
+    th { background: #e8f0fe; color: #0540f2; }
+    .official { display: block; margin-top: 15px; padding: 10px; background: #fff; border: 2px solid #0540f2; border-radius: 8px; text-align: center; color: #0540f2; font-weight: bold; text-decoration: none; font-size: 14px; }
+    .official:hover { background: #e8f0fe; }
+    #error { display: none; background: #ffe0e0; color: #e83845; padding: 12px; border-radius: 8px; margin-top: 15px; font-weight: bold; }
+
+    @media print {
+        body { background: #fff !important; padding: 0; }
+        .container { box-shadow: none; max-width: 100%; padding: 10px; }
+        .access-bar, .tabs, button, #form, #error, .no-print { display: none !important; }
+        #result { display: block !important; margin-top: 0; }
+        .tab-content { display: none !important; border: none; padding: 0; background: #fff; }
+        .tab-content.active { display: block !important; }
+        .brand-header { color: #0540f2 !important; background: none !important; border-bottom: 3px solid #0540f2; }
+        .brand-header h1, .brand-header p { color: #0540f2 !important; }
+        .score-box { background: #e8f0fe !important; color: #0540f2 !important; }
+
+.score-box .score, .score-box .level { color: #0540f2 !important; }
+    }
+</style>
+</head>
+<body>
+
+<div class="access-bar no-print">
+    <button onclick="changeFont(-1)">A−</button>
+    <button onclick="changeFont(0)">A</button>
+    <button onclick="changeFont(1)">A+</button>
+    <button class="eye" id="eyeBtn" onclick="toggleEye()">👁 Режим для слабовидящих</button>
+</div>
+
+<div class="container">
+
+    <div class="brand-header">
+        <h1>🏆  Навигатор компетенций Абилимпикс</h1>
+        <p>План подготовки · Диагностика · Дневник ИОМ · Инструкция наставнику · Приложения</p>
+        <div class="brand-colors">
+            <span style="background:#c9d7f2;"></span>
+            <span style="background:#4b83f2;"></span>
+            <span style="background:#0540f2;"></span>
+            <span style="background:#009f7a;"></span>
+            <span style="background:#e83845;"></span>
+        </div>
+    </div>
+
+    <div id="form">
+        <label>1. Категория участника:</label>
+        <select id="category">
+            <option value="">-- выберите --</option>
+            <option value="Школьник">Школьник</option>
+            <option value="Студент">Студент колледжа/вуза</option>
+            <option value="Специалист">Специалист</option>
+        </select>
+
+        <label>2. Компетенция:</label>
+        <select id="competency">
+            <option value="">-- выберите --</option>
+            <option value="web">Веб-разработка (программирование)</option>
+            <option value="design">Веб-дизайн</option>
+            <option value="poster">Дизайн плаката</option>
+            <option value="media">Мультимедийная журналистика</option>
+            <option value="1c">Специалист по типовым решениям 1С</option>
+            <option value="db">Администрирование баз данных</option>
+            <option value="network">Сетевое и системное администрирование</option>
+            <option value="cad">Инженерный дизайн (CAD) САПР</option>
+            <option value="robotics">Робототехника</option>
+            <option value="electronics">Сборка-разборка электронного оборудования</option>
+        </select>
+
+        <label>3. Уровень чемпионата:</label>
+        <select id="level">
+            <option value="">-- выберите --</option>
+            <option value="Региональный">Региональный чемпионат</option>
+            <option value="Отборочный">Национальный (отборочный этап)</option>
+            <option value="Финал">Национальный (финал)</option>
+        </select>
+
+        <label>4. Ваш текущий уровень:</label>
+        <select id="userlevel">
+            <option value="">-- выберите --</option>
+            <option value="Начальный">Начальный</option>
+            <option value="Средний">Средний</option>
+            <option value="Продвинутый">Продвинутый</option>
+        </select>
+
+        <label>5. Нозология участника:</label>
+        <select id="nosology">
+            <option value="">-- выберите --</option>
+            <option value="intellectual">Интеллектуальные нарушения (ОПР, ЗПР, УО)</option>
+            <option value="asd">Интеллектуальные нарушения (расстройство аутистического спектра)</option>
+            <option value="oda_mobile">Нарушения ОДА (мобильные)</option>
+            <option value="oda_wheelchair">Нарушения ОДА (на кресле-коляске)</option>
+            <option value="blind">Потеря зрения</option>
+            <option value="low_vision">Слабовидящие</option>
+            <option value="deaf">Потеря слуха</option>
+            <option value="hard_of_hearing">Слабослышащие</option>
+            <option value="somatic">Соматические заболевания</option>
+            <option value="speech">Нарушение речи</option>
+        </select>
+
+        <button type="button" onclick="buildPlan()">Построить маршрут</button>
+        <div id="error"></div>
+    </div>
+
+    <div id="result">
+        <div class="tabs no-print">
+            <button id="tabbtn-plan" class="active" onclick="showTab('plan')">📋  План подготовки</button>
+
+<button id="tabbtn-diag" onclick="showTab('diag')">🧪  Входная диагностика</button>
+            <button id="tabbtn-diary" onclick="showTab('diary')">📓  Дневник ИОМ</button>
+            <button id="tabbtn-mentor" onclick="showTab('mentor')">👨‍🏫  Инструкция наставнику</button>
+            <button id="tabbtn-apps" onclick="showTab('apps')">📎  Приложения</button>
+        </div>
+
+        <div id="tab-plan" class="tab-content active">
+            <h2 id="r-title"></h2>
+            <p class="meta" id="r-meta"></p>
+            <h3>📚  Что нужно знать:</h3><ul id="r-know"></ul>
+            <h3>🛠 Что нужно уметь:</h3><ul id="r-skill"></ul>
+            <h3>📝  Тренировочные задания:</h3><ul id="r-tasks"></ul>
+            <h3>🎯  Рекомендации по уровню чемпионата:</h3><ul id="r-level"></ul>
+            <h3>♿  Адаптация под нозологию:</h3><div id="r-access" class="access-block"></div>
+            <h3>👨‍🏫  Рекомендации эксперту-наставнику:</h3><div id="r-mentor" class="mentor-block"></div>
+            <h3>💡  Персональные рекомендации:</h3><ul id="r-personal"></ul>
+            <div class="note" id="r-note"></div>
+            <a href="https://abilympics-russia.ru/" target="_blank" class="official no-print">🔗  abilympics-russia.ru → «Документы» → «Конкурсные задания»</a>
+            <button type="button" class="pdf-btn no-print" onclick="printTab('tab-plan')">📄  Скачать план в PDF</button>
+        </div>
+
+        <div id="tab-diag" class="tab-content">
+            <h2>🧪  Входная диагностика</h2>
+            <p class="meta">Оцените каждое базовое умение по шкале: 0 — не умею, 1 — частично, 2 — уверенно.</p>
+            <div id="diag-questions"></div>
+            <button type="button" class="green no-print" onclick="calcDiagnostics()">Рассчитать профиль готовности</button>
+            <div id="diag-result"></div>
+            <button type="button" class="pdf-btn no-print" onclick="printTab('tab-diag')">📄  Скачать диагностику в PDF</button>
+        </div>
+
+        <div id="tab-diary" class="tab-content">
+            <h2>📓  Дневник индивидуального образовательного маршрута</h2>
+            <p class="meta">Заполните поля. Данные сохраняются в браузере (localStorage).</p>
+            <label>Цель (SMART):</label>
+            <textarea id="d-goal" placeholder="Например: подготовиться к региональному чемпионату по веб-разработке и занять 1 место"></textarea>
+            <label>Стартовый уровень:</label>
+            <input type="text" id="d-start" placeholder="Например: начальный, знаю HTML/CSS базово">
+            <label>Модули конкурсного задания:</label>
+            <table>
+                <thead><tr><th>Модуль</th><th>План. дата</th><th>Факт. дата</th><th>Отметка</th></tr></thead>
+                <tbody id="d-modules"></tbody>
+            </table>
+            <label>Точки контроля:</label>
+            <textarea id="d-control" placeholder="Например: 15.03 — пробный модуль 1 на время; 01.04 — пробный модуль 2; 15.04 — генеральный прогон"></textarea>
+            <label>Отметки о выполнении:</label>
+            <textarea id="d-marks" placeholder="Что выполнено, что перенесено, причины"></textarea>
+            <label>Рефлексия:</label>
+            <textarea id="d-reflect" placeholder="Что получилось, что было сложно, что изменить в подготовке"></textarea>
+            <button type="button" class="green no-print" onclick="saveDiary()">💾  Сохранить дневник</button>
+            <button type="button" class="gray no-print" onclick="loadDiary()">📂  Загрузить сохранённый</button>
+            <button type="button" class="gray no-print" onclick="clearDiary()">🗑 Очистить</button>
+            <button type="button" class="pdf-btn no-print" onclick="printTab('tab-diary')">📄  Скачать дневник в PDF</button>
+        </div>
+
+        <div id="tab-mentor" class="tab-content">
+            <h2>👨‍🏫  Инструкция для наставника</h2>
+            <div class="guide-block">
+                <h4>Блок 1. Диагностика и целеполагание</h4>
+                <ul>
+
+<li>Проведите входную диагностику (вкладка «Входная диагностика»).</li>
+                    <li>Совместно с участником сформулируйте цель по SMART.</li>
+                    <li>Определите стартовый уровень и дефициты.</li>
+                    <li>Уточните нозологию и необходимые условия доступности.</li>
+                </ul>
+                <h4>Блок 2. Планирование маршрута</h4>
+                <ul>
+                    <li>Разбейте подготовку на модули согласно конкурсному заданию.</li>
+                    <li>Для каждого модуля определите: что знать, что уметь, какие тренировки.</li>
+                    <li>Заполните дневник ИОМ (вкладка «Дневник ИОМ»).</li>
+                    <li>Согласуйте точки контроля (пробные модули на время).</li>
+                </ul>
+                <h4>Блок 3. Организация тренировок</h4>
+                <ul>
+                    <li>Школьник: 2–3 занятия в неделю с наставником.</li>
+                    <li>Студент: 3–4 тренировки в неделю по 1,5–2 часа.</li>
+                    <li>Специалист: 4–5 тренировок в неделю, акцент на скорость.</li>
+                    <li>Используйте материалы из вкладки «Приложения».</li>
+                    <li>Отрабатывайте задания на время в условиях, приближенных к чемпионату.</li>
+                </ul>
+                <h4>Блок 4. Сопровождение и контроль</h4>
+                <ul>
+                    <li>Проверяйте дневник ИОМ после каждой точки контроля.</li>
+                    <li>Фиксируйте прогресс и корректируйте маршрут.</li>
+                    <li>Учитывайте рекомендации по нозологии (ниже).</li>
+                    <li>Отрабатывайте стрессовые ситуации (наблюдатели, ограничение времени).</li>
+                </ul>
+                <h4>Блок 5. Рефлексия и корректировка</h4>
+                <ul>
+                    <li>После каждой точки контроля — рефлексия с участником.</li>
+                    <li>Что получилось, что было сложно, что изменить.</li>
+                    <li>Корректируйте план на основе результатов.</li>
+                    <li>Перед чемпионатом — генеральный прогон и психологическая подготовка.</li>
+                </ul>
+            </div>
+            <h3>Рекомендации по нозологии участника</h3>
+            <div id="mentor-nos" class="mentor-block"></div>
+            <button type="button" class="pdf-btn no-print" onclick="printTab('tab-mentor')">📄  Скачать инструкцию в PDF</button>
+        </div>
+
+        <div id="tab-apps" class="tab-content">
+            <h2>📎  Приложения: тренировочные материалы</h2>
+            <p class="meta">Материалы по компетенции и модулям конкурсного задания.</p>
+            <div id="apps-content"></div>
+            <a href="https://abilympics-russia.ru/" target="_blank" class="official no-print">🔗  Официальные задания: abilympics-russia.ru → «Документы» → «Конкурсные задания»</a>
+            <button type="button" class="pdf-btn no-print" onclick="printTab('tab-apps')">📄  Скачать приложения в PDF</button>
+        </div>
+    </div>
+</div>
+
+<script>
+// ============================================================
+// ДАННЫЕ
+// ============================================================
+var DATA = {
+    web: {
+        title: "Веб-разработка (программирование)",
+        know: ["HTML5, CSS3 — семантическая вёрстка, адаптивность", "JavaScript (ES6+) — DOM, события, fetch API", "Git и GitHub — основы", "Клиент-серверная архитектура, REST API", "Безопасность: валидация, XSS"],
+        skill: ["Создавать адаптивные страницы по макету", "Подключать внешние API", "Отлаживать код в консоли", "Использовать фреймворк (React/Vue)", "Размещать проект на хостинге"],
+        tasks: ["Модуль 1: свёрстать Landing Page по макету за 3–4 часа с адаптивом", "Модуль 2: реализовать интерактив — модальные окна, валидация формы", "Тренировка: исправить намеренные ошибки в чужом коде", "Тренировка: подключить внешний API и вывести данные"],
+
+note: "На региональном этапе задание проще (вёрстка + базовый JS). На финале — полный цикл с API и адаптивом."
+    },
+    design: {
+        title: "Веб-дизайн",
+        know: ["Композиция, типографика, цветоведение", "Figma — макеты, компоненты, Auto Layout", "UX/UI, адаптивный дизайн", "Подготовка макетов к вёрстке", "Понимание целевой аудитории"],
+        skill: ["Создавать wireframe и дизайн-макет в Figma", "Разрабатывать дизайн-систему", "Делать интерактивный прототип", "Адаптировать под 3 разрешения", "Презентовать дизайн-решение"],
+        tasks: ["Модуль 1: wireframe + дизайн-макеты Landing Page под смартфон/планшет/десктоп за 4 часа", "Модуль 2: сверстать страницу по своему макету с модальными окнами", "Тренировка: создать дизайн-систему из 10+ компонентов", "Тренировка: редизайн устаревшего интерфейса"],
+        note: "Задания часто включают и дизайн, и вёрстку. Тренируйтесь делать полный цикл за 4 часа."
+    },
+    poster: {
+        title: "Дизайн плаката",
+        know: ["Композиция, цветоведение, типографика", "Графический редактор (Photoshop/Illustrator/CorelDRAW/Figma)", "Форматы и разрешения для печати (CMYK, 300 dpi, вылеты)", "Посыл плаката и целевая аудитория", "Предпечатная подготовка"],
+        skill: ["Создавать плакат по брифу", "Подбирать шрифтовые пары и цвета", "Работать с векторной и растровой графикой", "Готовить макет к печати", "Презентовать концепцию"],
+        tasks: ["Модуль 1 (школьники): эскиз информационной листовки А5 за 2–3 часа", "Модуль 2 (студенты): макет афиши А3 с обработкой фото", "Модуль 3 (специалисты): буклет-гармошка А4 с фотоколлажем", "Тренировка: серия из 3 плакатов в едином стиле за 2 часа"],
+        note: "Тема плаката привязана к объявленному в России году. Тренируйтесь работать с выданными материалами за ограниченное время."
+    },
+    media: {
+        title: "Мультимедийная журналистика",
+        know: ["Основы журналистики: сбор информации, проверка фактов", "Съёмка видео (композиция, свет, звук)", "Монтаж (Premiere Pro / DaVinci Resolve / CapCut)", "Обработка фото и аудио", "Создание лонгрида (Tilda / Readymag)"],
+        skill: ["Снимать и монтировать видеосюжет 1–3 минуты", "Обрабатывать фото и аудио", "Создавать лонгрид с видео, фото, текстом", "Работать в команде", "Публиковать готовый материал"],
+        tasks: ["Модуль 1: снять и смонтировать видеосюжет на заданную тему за 2–3 часа", "Модуль 2: создать мультимедийный лонгрид", "Тренировка: фоторепортаж из 10–12 кадров с обработкой", "Тренировка: записать и обработать аудиоинтервью"],
+        note: "Компетенция включена в основную программу Национального чемпионата 2026 года. Важна скорость производства контента."
+    },
+    "1c": {
+        title: "Специалист по типовым решениям 1С",
+        know: ["1С:Предприятие 8 — интерфейс, справочники, документы", "Типовые конфигурации: Бухгалтерия, Управление торговлей, ЗУП", "Основы бухгалтерского и налогового учёта", "Настройка и администрирование 1С", "Основы встроенного языка 1С"],
+        skill: ["Настраивать типовую конфигурацию", "Вводить и обрабатывать данные", "Формировать отчёты", "Обновлять конфигурацию", "Решать типовые учётные задачи"],
+        tasks: ["Модуль 1: настроить типовую конфигурацию под заданные параметры", "Модуль 2: полный цикл учёта — от ввода данных до отчёта", "Тренировка: обновить конфигурацию и перенести данные", "Тренировка: кейс по автоматизации участка учёта"],
+        note: "Ключ — практика в реальной конфигурации 1С и понимание учётной логики."
+    },
+    db: {
+        title: "Администрирование баз данных",
+        know: ["SQL: SELECT, JOIN, GROUP BY, подзапросы", "Проектирование БД: нормализация, ключи, связи", "Создание и модификация структуры таблиц", "Резервное копирование и восстановление", "Управление пользователями и правами"],
+        skill: ["Создавать таблицы и схему данных", "Писать SQL-запросы разной сложности", "Создавать формы и отчёты", "Настраивать резервное копирование", "Обеспечивать целостность данных"],
+
+tasks: ["Модуль 1: создать структуру БД (3–4 таблицы) и схему данных за 30–40 минут", "Модуль 2: заполнить таблицы и создать формы", "Модуль 3: создать параметрические запросы", "Модуль 4: создать итоговые отчёты с гистограммой"],
+        note: "На региональном этапе часто MS Access, на финале — PostgreSQL/MySQL. Отработайте полный цикл за 2–3 часа."
+    },
+    network: {
+        title: "Сетевое и системное администрирование",
+        know: ["Модель OSI и TCP/IP, IP-адресация", "Настройка коммутаторов и маршрутизаторов", "VLAN, маршрутизация, DHCP, DNS", "Windows Server / Linux — базовые сервисы", "Безопасность сети (ACL, firewall)"],
+        skill: ["Собирать и настраивать локальную сеть", "Настраивать VLAN и маршрутизацию", "Поднимать серверные сервисы", "Диагностировать проблемы", "Настраивать межсетевой экран"],
+        tasks: ["Модуль 1: собрать схему сети по топологии и настроить оборудование", "Модуль 2: настроить VLAN и маршрутизацию", "Модуль 3: развернуть DNS/DHCP/Web-сервер", "Тренировка: найти и устранить неисправность в сети"],
+        note: "Тренируйтесь на эмуляторах (Cisco Packet Tracer, GNS3). Важно уметь объяснять действия."
+    },
+    cad: {
+        title: "Инженерный дизайн (CAD) САПР",
+        know: ["Основы черчения и ЕСКД", "CAD-система (КОМПАС-3D / SolidWorks / AutoCAD)", "3D-моделирование: тела, поверхности, сборки", "Оформление чертежей по ГОСТ", "Библиотеки стандартных изделий"],
+        skill: ["Создавать 3D-модели деталей по чертежу", "Собирать изделие из деталей", "Оформлять чертежи по ЕСКД", "Выполнять измерения и расчёты", "Вносить изменения в модель"],
+        tasks: ["Модуль 1: построить 3D-модель детали по чертежу за 1,5–2 часа", "Модуль 2: создать сборочную единицу из 5+ деталей", "Модуль 3: оформить рабочий чертёж по ГОСТ", "Тренировка: внести изменения в модель по устному заданию"],
+        note: "Ключ — скорость и точность. Уточните, какая CAD-система на вашем региональном чемпионате."
+    },
+    robotics: {
+        title: "Робототехника",
+        know: ["Основы механики и электроники", "Программирование микроконтроллеров (Arduino / Raspberry Pi)", "Датчики и исполнительные механизмы", "Основы схемотехники и пайки", "Принципы отладки"],
+        skill: ["Собирать робота по схеме", "Программировать поведение (движение по линии)", "Подключать и настраивать датчики", "Отлаживать код", "Решать задачу за ограниченное время"],
+        tasks: ["Модуль 1: собрать робота по схеме за 1–1,5 часа", "Модуль 2: запрограммировать движение по линии", "Модуль 3: реализовать сортировку объектов по цвету", "Тренировка: устранить неисправность за 30 минут"],
+        note: "Нет оборудования — используйте Tinkercad Circuits."
+    },
+    electronics: {
+        title: "Сборка-разборка электронного оборудования",
+        know: ["Основы электроники: резисторы, конденсаторы, транзисторы", "Чтение принципиальных схем", "Пайка: выводные и SMD-компоненты", "Мультиметр и осциллограф", "Техника безопасности"],
+        skill: ["Читать и собирать схему по диаграмме", "Выполнять пайку компонентов", "Диагностировать неисправности", "Заменять компоненты", "Проверять работу схемы"],
+        tasks: ["Модуль 1: собрать схему по принципиальной диаграмме за 1,5–2 часа", "Модуль 2: выполнить пайку компонентов на плате", "Модуль 3: найти неисправность в схеме", "Тренировка: заменить компонент за 20 минут"],
+        note: "Критически важна аккуратность и техника безопасности."
+    }
+};
+
+// ============================================================
+// ВХОДНАЯ ДИАГНОСТИКА — 8 базовых умений на компетенцию
+// ============================================================
+var DIAGNOSTICS = {
+    web: ["Знаю структуру HTML-документа и основные теги", "Умею стилизовать через CSS (селекторы, свойства)", "Понимаю базовый JavaScript (переменные, функции)", "Работал с Git хотя бы на базовом уровне", "Понимаю, что такое API и как с ним работать", "Умею верстать адаптивно (media queries)", "Работал с фреймворком (React/Vue) или хочу освоить",
+
+"Размещал проект на хостинге"],
+    design: ["Понимаю основы композиции и цветоведения", "Умею работать в Figma (макеты, слои)", "Знаю принципы UX/UI", "Умею делать адаптивные макеты", "Работал с дизайн-системой (компоненты)", "Умею делать интерактивные прототипы", "Понимаю типографику и шрифтовые пары", "Готовил макеты к вёрстке"],
+    poster: ["Понимаю основы композиции плаката", "Умею работать в графическом редакторе", "Знаю форматы и разрешения для печати", "Понимаю разницу CMYK и RGB", "Умею подбирать шрифтовые пары", "Работал с предпечатной подготовкой", "Умею создавать серию в едином стиле", "Презентовал дизайн-решение"],
+    media: ["Понимаю основы журналистики", "Умею снимать видео (кадр, свет, звук)", "Работал с видеоредактором", "Умею обрабатывать фото", "Умею записывать и обрабатывать аудио", "Создавал лонгрид (Tilda/Readymag)", "Понимаю принципы фактчекинга", "Работал в команде над медиапроектом"],
+    "1c": ["Работал в 1С:Предприятие 8", "Знаю типовые конфигурации", "Понимаю основы бухгалтерского учёта", "Умею настраивать конфигурацию", "Умею вводить данные в документы", "Умею формировать отчёты", "Работал с обновлением конфигурации", "Понимаю основы встроенного языка 1С"],
+    db: ["Понимаю, что такое реляционная БД", "Знаю основы SQL (SELECT)", "Умею создавать таблицы", "Понимаю JOIN и связи", "Умею писать запросы с группировкой", "Работал с формами и отчётами", "Настраивал резервное копирование", "Разграничивал права доступа"],
+    network: ["Понимаю модель OSI и TCP/IP", "Знаю IP-адресацию и маски", "Настраивал коммутаторы/маршрутизаторы", "Понимаю VLAN", "Настраивал DHCP/DNS", "Работал с Windows Server или Linux", "Настраивал firewall", "Диагностировал сетевые проблемы"],
+    cad: ["Понимаю основы черчения", "Работал в CAD-системе", "Умею создавать 3D-модели", "Умею создавать сборки", "Знаю ЕСКД и ГОСТ", "Умею оформлять чертежи", "Работал с библиотеками стандартных изделий", "Умею вносить изменения в модель"],
+    robotics: ["Понимаю основы механики", "Понимаю основы электроники", "Программировал микроконтроллеры", "Работал с датчиками", "Подключал исполнительные механизмы", "Умею отлаживать код", "Собирал робота по схеме", "Решал задачу за ограниченное время"],
+    electronics: ["Понимаю основы электроники", "Умею читать принципиальные схемы", "Владею пайкой (выводные компоненты)", "Владею пайкой SMD", "Умею работать с мультиметром", "Умею диагностировать неисправности", "Заменял компоненты на плате", "Соблюдаю технику безопасности"]
+};
+
+// ============================================================
+// ПРИЛОЖЕНИЯ — тренировочные материалы по модулям
+// ============================================================
+var APPENDICES = {
+    web: [
+        {module:"Модуль 1. Вёрстка Landing Page", items:["MDN Web Docs: developer.mozilla.org (HTML, CSS)", "Тренажёр: htmlacademy.ru (бесплатные курсы)", "FreeCodeCamp: freecodecamp.org (Responsive Web Design)", "Практика: свёрстать 3 макета с Figma Community за 3–4 часа каждый"]},
+        {module:"Модуль 2. Интерактив (JS)", items:["MDN: JavaScript Guide", "Практика: модальные окна, валидация формы, слайдер", "Задачи: codewars.com (JavaScript, 8–6 kyu)", "Практика: 5 задач с fetch API (погода, курсы валют)"]},
+        {module:"Модуль 3. API и адаптив", items:["Документация: REST API, JSON", "Практика: подключить публичное API (например, open-meteo.com)", "Инструменты: Postman, DevTools Network", "Практика: адаптив под 320/768/1280"]},
+        {module:"Дополнительно", items:["Конкурсные задания прошлых лет: abilympics-russia.ru", "YouTube: каналы по веб-разработке", "GitHub: учебные репозитории (freeCodeCamp, javascript30)"]}
+    ],
+    design: [
+        {module:"Модуль 1. Wireframe и макеты", items:["Figma: figma.com (бесплатный тариф)", "Практика: wireframe в Figma за 30 минут", "Практика: макет под 320/768/1280", "Референсы: behance.net, dribbble.com"]},
+
+{module:"Модуль 2. Вёрстка по макету", items:["Практика: HTML/CSS по своему макету", "Инструменты: Flexbox, Grid", "Практика: адаптив + модальные окна", "Проверка: валидатор W3C"]},
+        {module:"Модуль 3. Прототип", items:["Figma: Prototype, Auto Layout", "Практика: интерактивный прототип с переходами", "Практика: дизайн-система из 10+ компонентов", "Презентация: подготовка защиты"]},
+        {module:"Дополнительно", items:["Конкурсные задания: abilympics-russia.ru", "UX Journal: uxjournal.ru", "Статьи на Habr: habr.com/ru/hubs/design"]}
+    ],
+    poster: [
+        {module:"Модуль 1. Листовка А5", items:["Практика: эскиз листовки за 2–3 часа", "Инструменты: Photoshop/Illustrator/CorelDRAW/Figma", "Практика: шрифтовые пары (Google Fonts)", "Практика: цветовая схема (Coolors.co)"]},
+        {module:"Модуль 2. Афиша А3", items:["Практика: макет афиши с обработкой фото", "Предпечатка: CMYK, 300 dpi, вылеты 3 мм", "Практика: работа с фото (маски, тонирование)", "Практика: композиция и акценты"]},
+        {module:"Модуль 3. Буклет-гармошка", items:["Практика: буклет А4 с фотоколлажем", "Инфографика: простые схемы и иконки", "Практика: серия в едином стиле", "Презентация концепции"]},
+        {module:"Дополнительно", items:["Конкурсные задания: abilympics-russia.ru", "Behance: behance.net (референсы)", "Уроки: YouTube (каналы по графическому дизайну)"]}
+    ],
+    media: [
+        {module:"Модуль 1. Видеосюжет", items:["Практика: съёмка на смартфон (композиция, свет)", "Монтаж: CapCut / DaVinci Resolve / Premiere", "Практика: сюжет 1–3 минуты за 2–3 часа", "Звук: запись и обработка"]},
+        {module:"Модуль 2. Лонгрид", items:["Tilda: tilda.cc (бесплатный тариф)", "Практика: лонгрид с видео, фото, текстом", "Практика: структура материала", "Публикация и проверка"]},
+        {module:"Модуль 3. Фоторепортаж", items:["Практика: серия 10–12 кадров с историей", "Обработка: Lightroom / Photoshop", "Практика: подписи и структура", "Практика: аудиоинтервью"]},
+        {module:"Дополнительно", items:["Конкурсные задания: abilympics-russia.ru", "Онлайн-курсы: «Медиа» на Stepik", "YouTube: каналы по монтажу и съёмке"]}
+    ],
+    "1c": [
+        {module:"Модуль 1. Настройка конфигурации", items:["Учебная версия 1С: edu.1c.ru", "Документация: its.1c.ru", "Практика: настройка под параметры", "Практика: справочники и документы"]},
+        {module:"Модуль 2. Полный цикл учёта", items:["Практика: ввод первичных данных", "Практика: проведение документов", "Практика: формирование отчётов", "Разбор кейсов: бухгалтерия, торговля, ЗУП"]},
+        {module:"Модуль 3. Обновление", items:["Практика: обновление конфигурации", "Практика: перенос данных", "Резервное копирование", "Разграничение прав пользователей"]},
+        {module:"Дополнительно", items:["Конкурсные задания: abilympics-russia.ru", "Форум: forum.1c.ru (разбор задач)", "YouTube: каналы по 1С"]}
+    ],
+    db: [
+        {module:"Модуль 1. Структура БД", items:["Практика: проектирование 3–4 таблиц", "Инструменты: MS Access / PostgreSQL / MySQL", "Практика: схема данных (связи)", "Практика: нормализация"]},
+        {module:"Модуль 2. Данные и формы", items:["Практика: заполнение таблиц", "Практика: формы с выпадающими списками", "Практика: проверка ввода", "Практика: подчинённые формы"]},
+        {module:"Модуль 3. Запросы", items:["Практика: SELECT, JOIN, GROUP BY", "Практика: параметрические запросы", "Тренажёр: sql-ex.ru", "Тренажёр: sqlbolt.com"]},
+        {module:"Модуль 4. Отчёты", items:["Практика: отчёты с группировкой", "Практика: гистограммы", "Практика: итоговые поля", "Практика: экспорт отчётов"]}
+    ],
+    network: [
+        {module:"Модуль 1. Схема сети", items:["Эмулятор: Cisco Packet Tracer", "Практика: собрать топологию", "Практика: IP-адресация", "Практика: проверка связи (ping)"]},
+        {module:"Модуль 2. VLAN и маршрутизация", items:["Практика: настройка VLAN", "Практика: межсетевая маршрутизация", "Практика: ACL", "Проверка: traceroute"]},
+
+{module:"Модуль 3. Серверные сервисы", items:["Практика: DHCP (Windows Server / Linux)", "Практика: DNS", "Практика: Web-сервер", "Практика: firewall"]},
+        {module:"Дополнительно", items:["Конкурсные задания: abilympics-russia.ru", "GNS3: gns3.com", "Документация Microsoft: docs.microsoft.com"]}
+    ],
+    cad: [
+        {module:"Модуль 1. 3D-модель детали", items:["ПО: КОМПАС-3D (учебная), SolidWorks, AutoCAD", "Практика: деталь по чертежу за 1,5–2 часа", "Практика: эскиз, выдавливание, скругления", "Практика: размеры и параметризация"]},
+        {module:"Модуль 2. Сборка", items:["Практика: сборка из 5+ деталей", "Сопряжения и ограничения", "Проверка на пересечения", "Практика: разнесённый вид"]},
+        {module:"Модуль 3. Чертёж по ГОСТ", items:["Практика: оформление по ЕСКД", "Разрезы, сечения, виды", "Практика: размеры и допуски", "Практика: основная надпись"]},
+        {module:"Дополнительно", items:["Конкурсные задания: abilympics-russia.ru", "YouTube: уроки КОМПАС-3D и SolidWorks", "Библиотеки стандартных изделий"]}
+    ],
+    robotics: [
+        {module:"Модуль 1. Сборка робота", items:["Оборудование: Arduino / Raspberry Pi (или Tinkercad Circuits)", "Практика: сборка по схеме за 1–1,5 часа", "Практика: подключение питания", "Практика: проверка работоспособности"]},
+        {module:"Модуль 2. Движение по линии", items:["Практика: датчики линии", "Практика: ПИД-регулятор (базово)", "Практика: отладка кода", "Практика: заезды на время"]},
+        {module:"Модуль 3. Сортировка", items:["Практика: цветовой датчик", "Практика: сервопривод/манипулятор", "Практика: логика сортировки", "Практика: тестирование"]},
+        {module:"Дополнительно", items:["Конкурсные задания: abilympics-russia.ru", "Arduino: arduino.cc", "RobotClass: robotclass.ru"]}
+    ],
+    electronics: [
+        {module:"Модуль 1. Сборка схемы", items:["Практика: чтение принципиальных схем", "Практика: сборка по диаграмме за 1,5–2 часа", "Инструменты: мультиметр, паяльная станция", "Практика: проверка соединений"]},
+        {module:"Модуль 2. Пайка", items:["Практика: пайка выводных компонентов", "Практика: пайка SMD", "Практика: аккуратность и качество", "Техника безопасности"]},
+        {module:"Модуль 3. Диагностика", items:["Практика: поиск неисправности", "Практика: замена компонента за 20 минут", "Проверка мультиметром", "Практика: тестирование схемы"]},
+        {module:"Дополнительно", items:["Конкурсные задания: abilympics-russia.ru", "Сайты: cxem.net, radiolok.ru", "YouTube: уроки по электронике и пайке"]}
+    ]
+};
+
+// ============================================================
+// УРОВНИ, КАТЕГОРИИ, НОЗОЛОГИИ
+// ============================================================
+var LEVEL_RECS = {
+    "Региональный": ["Срок подготовки: 1–3 месяца.", "Изучите регламент и задания регионального этапа прошлых лет.", "Отработайте базовые модули до уверенного выполнения.", "Тренируйтесь на время (3–4 часа на модуль).", "Посетите тренировочные сборы или мастер-классы.", "Психологическая подготовка: отработайте задание при наблюдателях."],
+    "Отборочный": ["Срок подготовки: 3–6 месяцев.", "Изучите задания национального уровня прошлых лет.", "Отработайте все модули, включая повышенную сложность.", "Тренируйтесь с незнакомым оборудованием/ПО.", "Участвуйте в межрегиональных тренировочных мероприятиях.", "Разберите типичные ошибки прошлых лет с экспертом.", "Отработайте адаптацию к изменённым условиям (30%)."],
+    "Финал": ["Срок подготовки: 6–12 месяцев.", "Изучите все доступные задания финала прошлых лет.", "Доведите выполнение типовых модулей до автоматизма.", "Тренируйтесь в условиях, приближенных к финалу.", "Участвуйте во всероссийских тренировочных сборах.", "Проработайте психологическую устойчивость.", "Отработайте презентацию и защиту результата.", "Изучите мировые практики (WorldSkills, EuroSkills)."]
+};
+
+var CATEGORY_NOTES = {
+    "Школьник": "Для школьников: работайте с наставником, 2–3 занятия в неделю.",
+
+"Студент": "Для студентов: 3–4 тренировки в неделю по 1,5–2 часа.",
+    "Специалист": "Для специалистов: 4–5 тренировок в неделю. Акцент — скорость."
+};
+
+var USERLEVEL_NOTES = {
+    "Начальный": "Вы только начинаете — сосредоточьтесь на базовых навыках.",
+    "Средний": "У вас есть база — переходите к отработке типовых заданий на время.",
+    "Продвинутый": "Вы готовы — акцент на скорость и задания повышенной сложности."
+};
+
+var NOSOLOGY_ACCESS = {
+    "intellectual": { label: "Интеллектуальные нарушения (ОПР, ЗПР, УО)",
+        access: ["Упрощённые пошаговые инструкции", "Дополнительное время (+25–50% по регламенту)", "Возможность переспросить задание", "Наглядные схемы и чек-листы", "Тихие изолированные места при необходимости"],
+        equipment: "Специальное оборудование не требуется. Возможен ассистент по регламенту.",
+        specialists: "При необходимости — тьютор. Переводчики не требуются.",
+        mentor: "Разбивайте задание на мелкие шаги с визуальными подсказками. Хвалите за каждый этап. Избегайте перегруженных интерфейсов. Дайте дополнительное время на освоение инструментов." },
+    "asd": { label: "Интеллектуальные нарушения (РАС)",
+        access: ["Изолированное рабочее место", "Чёткая структура и визуальное расписание", "Перерывы при сенсорной перегрузке", "Письменное дублирование инструкций", "Предварительное знакомство с площадкой"],
+        equipment: "Возможны наушники (шумоподавление) по согласованию.",
+        specialists: "При необходимости — тьютор.",
+        mentor: "Обеспечьте предсказуемость: расписание, заранее известные этапы. Предупредите об изменениях. Снизьте сенсорную нагрузку. Дайте время на адаптацию." },
+    "oda_mobile": { label: "Нарушения ОДА (мобильные)",
+        access: ["Доступ без ступеней и порогов", "Стол регулируемой высоты", "Пространство для передвижения", "Возможность менять положение", "Доступные туалеты"],
+        equipment: "Специальное оборудование не требуется (эргономичная мебель — по запросу).",
+        specialists: "Ассистент — по запросу.",
+        mentor: "Проверьте доступность площадки заранее. Организуйте удобный маршрут. Не торопите при перемещениях. Уточните потребности в мебели." },
+    "oda_wheelchair": { label: "Нарушения ОДА (кресло-коляска)",
+        access: ["Беспрепятственный подъезд", "Стол с местом для колен", "Пандусы, лифты", "Доступные туалеты", "Брифинг без необходимости вставать"],
+        equipment: "Регулируемый стол, при необходимости — подъёмник/пандус.",
+        specialists: "Ассистент — по запросу.",
+        mentor: "Заранее проверьте маршрут и площадку. Убедитесь, что рабочее место удобно. Не предлагайте помощь без запроса. Обсудите план действий при необходимости." },
+    "blind": { label: "Потеря зрения",
+        access: ["Материалы в доступном формате (Брайль/аудио/электронно)", "Сопровождение волонтёра", "Речевое зачитывание задания", "ПО с речевым выводом (NVDA, JAWS)", "Тактильные метки"],
+        equipment: "Брайлевский дисплей, аудиогарнитура, ПО экранного доступа.",
+        specialists: "Тифлопереводчик / ассистент-сопровождающий — обязательно.",
+        mentor: "Проверьте доступность материалов заранее. Отработайте маршрут по площадке. Используйте тактильные модели. Не говорите «вот тут» — описывайте словами." },
+    "low_vision": { label: "Слабовидящие",
+        access: ["Увеличенный шрифт и контраст", "Экран с высокой контрастностью", "Дополнительное освещение", "Лупа / электронная лупа", "Устное дублирование инструкций"],
+        equipment: "Электронная лупа, крупный монитор, ПО увеличения (MAGic, ZoomText).",
+        specialists: "Тифлопереводчик / ассистент — по запросу.",
+        mentor: "Уточните комфортный размер шрифта и освещение. Проверьте контрастность интерфейса. Дублируйте инструкции голосом. Разрешайте использовать лупу." },
+    "deaf": { label: "Потеря слуха",
+
+access: ["Письменные инструкции", "Переводчик РЖЯ на брифинге", "Визуальные сигналы вместо звуковых", "Прямая видимость эксперта", "Видеозапись с субтитрами"],
+        equipment: "Визуальные сигналы — по запросу.",
+        specialists: "Переводчик русского жестового языка (РЖЯ) — обязательно.",
+        mentor: "Убедитесь, что участник понял задание. Не говорите спиной. Используйте визуальные схемы. Не снижайте баллы за отсутствие устного ответа, если задание не требует речи." },
+    "hard_of_hearing": { label: "Слабослышащие",
+        access: ["Письменные инструкции", "FM-система / звукоусиление", "Расположение ближе к эксперту", "Возможность переспросить", "Субтитры к видео"],
+        equipment: "FM-система / звукоусилитель — по запросу.",
+        specialists: "Переводчик РЖЯ — по запросу.",
+        mentor: "Говорите чётко, лицом к участнику. Дублируйте ключевую информацию письменно. Проверьте работу FM-системы. Не перебивайте и не торопите." },
+    "somatic": { label: "Соматические заболевания",
+        access: ["Перерывы по состоянию здоровья", "Доступ к воде и лекарствам", "Регулируемое рабочее место", "Возможность покинуть аудиторию", "Гибкий график в рамках регламента"],
+        equipment: "Специальное оборудование не требуется (медицинские принадлежности — личные).",
+        specialists: "Ассистент — по запросу.",
+        mentor: "Уточните потребности в перерывах и лекарствах заранее. Обеспечьте доступ к воде. Не создавайте стрессовых ситуаций. Знайте план действий при ухудшении самочувствия." },
+    "speech": { label: "Нарушение речи",
+        access: ["Письменная форма общения", "Возможность отвечать письменно", "Увеличенное время на устные ответы", "Визуальные средства коммуникации", "Понимание со стороны эксперта"],
+        equipment: "Планшет / коммуникатор — по запросу.",
+        specialists: "Логопед / ассистент — по запросу.",
+        mentor: "Дайте время на формулировку ответа. Не перебивайте. Используйте письменную форму при необходимости. Не требуйте устного ответа, если задание позволяет письменный." }
+};
+
+// ============================================================
+// ДОСТУПНОСТЬ
+// ============================================================
+var fontLevel = 0;
+function changeFont(dir) {
+    if (dir === 0) fontLevel = 0;
+    else fontLevel += dir;
+    if (fontLevel < -2) fontLevel = -2;
+    if (fontLevel > 4) fontLevel = 4;
+    var size = 15 + fontLevel * 2;
+    document.documentElement.style.setProperty('--base-font', size + 'px');
+}
+function toggleEye() {
+    document.body.classList.toggle('eye-mode');
+    var btn = document.getElementById('eyeBtn');
+    if (document.body.classList.contains('eye-mode')) {
+        btn.classList.add('active');
+        btn.textContent = '👁 Обычный режим';
+        if (fontLevel < 1) changeFont(2);
+    } else {
+        btn.classList.remove('active');
+        btn.textContent = '👁 Режим для слабовидящих';
+        changeFont(0);
+    }
+}
+
+// ============================================================
+// ВКЛАДКИ
+// ============================================================
+function showTab(name) {
+    var tabs = ['plan', 'diag', 'diary', 'mentor', 'apps'];
+    for (var i = 0; i < tabs.length; i++) {
+        var content = document.getElementById('tab-' + tabs[i]);
+        var btn = document.getElementById('tabbtn-' + tabs[i]);
+        if (content) content.classList.remove('active');
+        if (btn) btn.classList.remove('active');
+    }
+    document.getElementById('tab-' + name).classList.add('active');
+    document.getElementById('tabbtn-' + name).classList.add('active');
+    window.scrollTo(0, 0);
+}
+
+// ============================================================
+// ЗАПОЛНЕНИЕ СПИСКОВ
+// ============================================================
+function fillList(id, items) {
+    var list = document.getElementById(id);
+    if (!list) return;
+    list.innerHTML = "";
+    for (var i = 0; i < items.length; i++) {
+        var li = document.createElement("li");
+
+li.textContent = items[i];
+        list.appendChild(li);
+    }
+}
+
+// ============================================================
+// ПОСТРОЕНИЕ МАРШРУТА
+// ============================================================
+function buildPlan() {
+    var errorBox = document.getElementById("error");
+    errorBox.style.display = "none";
+
+    var category = document.getElementById("category").value;
+    var competency = document.getElementById("competency").value;
+    var level = document.getElementById("level").value;
+    var userlevel = document.getElementById("userlevel").value;
+    var nosology = document.getElementById("nosology").value;
+
+    if (!category || !competency || !level || !userlevel || !nosology) {
+        errorBox.textContent = "Заполните все пять полей!";
+        errorBox.style.display = "block";
+        return;
+    }
+
+    var info = DATA[competency];
+    var nos = NOSOLOGY_ACCESS[nosology];
+    if (!info || !nos) {
+        errorBox.textContent = "Нет данных по выбранной компетенции или нозологии.";
+        errorBox.style.display = "block";
+        return;
+    }
+
+    // Вкладка 1: план
+    document.getElementById("r-title").textContent = info.title;
+    document.getElementById("r-meta").textContent =
+        "Категория: " + category + " | Уровень: " + level +
+        " | Подготовка: " + userlevel + " | Нозология: " + nos.label;
+
+    fillList("r-know", info.know);
+    fillList("r-skill", info.skill);
+    fillList("r-tasks", info.tasks);
+    fillList("r-level", LEVEL_RECS[level] || []);
+
+    var accessHtml = "<p><strong>" + nos.label + "</strong></p>";
+    accessHtml += "<p><strong>Адаптация:</strong></p><ul>";
+    for (var a = 0; a < nos.access.length; a++) accessHtml += "<li>" + nos.access[a] + "</li>";
+    accessHtml += "</ul>";
+    accessHtml += "<p><strong>Оборудование:</strong> " + nos.equipment + "</p>";
+    accessHtml += "<p><strong>Специалисты:</strong> " + nos.specialists + "</p>";
+    document.getElementById("r-access").innerHTML = accessHtml;
+    document.getElementById("r-mentor").textContent = nos.mentor || "—";
+
+    var personal = [];
+    if (info.note) personal.push(info.note);
+    if (CATEGORY_NOTES[category]) personal.push(CATEGORY_NOTES[category]);
+    if (USERLEVEL_NOTES[userlevel]) personal.push(USERLEVEL_NOTES[userlevel]);
+    fillList("r-personal", personal);
+    document.getElementById("r-note").textContent =
+        "💡  " + (info.note || "") + " " + (CATEGORY_NOTES[category] || "") + " " + (USERLEVEL_NOTES[userlevel] || "");
+
+    // Вкладка 2: диагностика
+    buildDiagnostics(competency);
+
+    // Вкладка 3: дневник
+    buildDiaryModules(competency);
+
+    // Вкладка 4: инструкция наставнику — нозология
+    document.getElementById("mentor-nos").innerHTML =
+        "<p><strong>" + nos.label + "</strong></p>" +
+        "<p>" + (nos.mentor || "—") + "</p>" +
+        "<p><strong>Оборудование:</strong> " + nos.equipment + "</p>" +
+        "<p><strong>Специалисты:</strong> " + nos.specialists + "</p>";
+
+    // Вкладка 5: приложения
+    buildAppendices(competency);
+
+    document.getElementById("form").style.display = "none";
+    document.getElementById("result").style.display = "block";
+    showTab('plan');
+    window.scrollTo(0, 0);
+}
+
+// ============================================================
+// ДИАГНОСТИКА
+// ============================================================
+function buildDiagnostics(comp) {
+    var container = document.getElementById("diag-questions");
+    container.innerHTML = "";
+    document.getElementById("diag-result").innerHTML = "";
+    var items = DIAGNOSTICS[comp] || [];
+    for (var i = 0; i < items.length; i++) {
+        var div = document.createElement("div");
+        div.className = "q-item";
+        var p = document.createElement("p");
+        p.textContent = (i + 1) + ". " + items[i];
+        div.appendChild(p);
+        var opts = ["0 — не умею", "1 — частично", "2 — уверенно"];
+        for (var j = 0; j < opts.length; j++) {
+
+var lbl = document.createElement("label");
+            var inp = document.createElement("input");
+            inp.type = "radio";
+            inp.name = "diag_" + i;
+            inp.value = j;
+            lbl.appendChild(inp);
+            lbl.appendChild(document.createTextNode(opts[j]));
+            div.appendChild(lbl);
+        }
+        container.appendChild(div);
+    }
+}
+
+function calcDiagnostics() {
+    var comp = document.getElementById("competency").value;
+    var items = DIAGNOSTICS[comp] || [];
+    var total = 0;
+    var answered = 0;
+    for (var i = 0; i < items.length; i++) {
+        var radios = document.getElementsByName("diag_" + i);
+        for (var j = 0; j < radios.length; j++) {
+            if (radios[j].checked) { total += parseInt(radios[j].value); answered++; break; }
+        }
+    }
+    var max = items.length * 2;
+    var percent = max > 0 ? Math.round(total / max * 100) : 0;
+    var profile, profileRec;
+    if (percent >= 80) { profile = "Высокий"; profileRec = "Готов к тренировкам на время и участию в соревнованиях. Акцент на скорость и стрессоустойчивость."; }
+    else if (percent >= 50) { profile = "Средний"; profileRec = "Есть база. Нужна систематическая подготовка по модулям конкурсного задания."; }
+    else { profile = "Начальный"; profileRec = "Требуется заложить основы. Начните с базовых тем и простых упражнений."; }
+
+    var html = '<div class="score-box">';
+    html += '<div class="score">' + total + ' / ' + max + ' (' + percent + '%)</div>';
+    html += '<div class="level">Профиль готовности: ' + profile + '</div>';
+    html += '</div>';
+    html += '<p class="meta">Отвечено: ' + answered + ' из ' + items.length + '</p>';
+    html += '<h3>Критерии оценивания</h3><ul>';
+    html += '<li>0 — умение отсутствует, требуется обучение с нуля.</li>';
+    html += '<li>1 — умение частично сформировано, нужна практика.</li>';
+    html += '<li>2 — умение сформировано, можно переходить к заданиям на время.</li>';
+    html += '</ul>';
+    html += '<h3>Рекомендация</h3><div class="note">' + profileRec + '</div>';
+    if (answered < items.length) {
+        html += '<div class="note">⚠ Ответьте на все вопросы для точного профиля.</div>';
+    }
+    document.getElementById("diag-result").innerHTML = html;
+}
+
+// ============================================================
+// ДНЕВНИК ИОМ
+// ============================================================
+function buildDiaryModules(comp) {
+    var tbody = document.getElementById("d-modules");
+    tbody.innerHTML = "";
+    var modules = APPENDICES[comp] || [];
+    for (var i = 0; i < modules.length; i++) {
+        var tr = document.createElement("tr");
+        tr.innerHTML = '<td>' + modules[i].module + '</td>' +
+            '<td><input type="date" id="d-pl-' + i + '"></td>' +
+            '<td><input type="date" id="d-fa-' + i + '"></td>' +
+            '<td><input type="text" id="d-mk-' + i + '" placeholder="✔ / ✖ / перенос"></td>';
+        tbody.appendChild(tr);
+    }
+}
+
+function saveDiary() {
+    var comp = document.getElementById("competency").value;
+    var data = {
+        comp: comp,
+        goal: document.getElementById("d-goal").value,
+        start: document.getElementById("d-start").value,
+        control: document.getElementById("d-control").value,
+        marks: document.getElementById("d-marks").value,
+        reflect: document.getElementById("d-reflect").value,
+        modules: []
+    };
+    var rows = document.querySelectorAll("#d-modules tr");
+    for (var i = 0; i < rows.length; i++) {
+        data.modules.push({
+            plan: (document.getElementById("d-pl-" + i) || {}).value || "",
+            fact: (document.getElementById("d-fa-" + i) || {}).value || "",
+            mark: (document.getElementById("d-mk-" + i) || {}).value || ""
+        });
+    }
+    try {
+        localStorage.setItem("abilympics_diary", JSON.stringify(data));
+        alert("Дневник сохранён в браузере.");
+    } catch (e) { alert("Не удалось сохранить: " + e.message); }
+}
+
+function loadDiary() {
+    var raw = localStorage.getItem("abilympics_diary");
+    if (!raw) { alert("Сохранённых данных нет."); return; }
+    try {
+        var data = JSON.parse(raw);
+        if (data.comp && data.comp !== document.getElementById("competency").value) {
+            if (!confirm("Данные сохранены для другой компетенции. Загрузить?")) return;
+        }
+        document.getElementById("d-goal").value = data.goal || "";
+        document.getElementById("d-start").value = data.start || "";
+        document.getElementById("d-control").value = data.control || "";
+        document.getElementById("d-marks").value = data.marks || "";
+        document.getElementById("d-reflect").value = data.reflect || "";
+        for (var i = 0; i < data.modules.length; i++) {
+            if (document.getElementById("d-pl-" + i)) document.getElementById("d-pl-" + i).value = data.modules[i].plan;
+            if (document.getElementById("d-fa-" + i)) document.getElementById("d-fa-" + i).value = data.modules[i].fact;
+            if (document.getElementById("d-mk-" + i)) document.getElementById("d-mk-" + i).value = data.modules[i].mark;
+        }
+        alert("Дневник загружен.");
+    } catch (e) { alert("Ошибка загрузки: " + e.message); }
+}
+
+function clearDiary() {
+    if (!confirm("Очистить все поля дневника?")) return;
+    document.getElementById("d-goal").value = "";
+    document.getElementById("d-start").value = "";
+    document.getElementById("d-control").value = "";
+    document.getElementById("d-marks").value = "";
+    document.getElementById("d-reflect").value = "";
+    var rows = document.querySelectorAll("#d-modules tr");
+    for (var i = 0; i < rows.length; i++) {
+        if (document.getElementById("d-pl-" + i)) document.getElementById("d-pl-" + i).value = "";
+        if (document.getElementById("d-fa-" + i)) document.getElementById("d-fa-" + i).value = "";
+        if (document.getElementById("d-mk-" + i)) document.getElementById("d-mk-" + i).value = "";
+    }
+}
+
+// ============================================================
+// ПРИЛОЖЕНИЯ
+// ============================================================
+function buildAppendices(comp) {
+    var container = document.getElementById("apps-content");
+    container.innerHTML = "";
+    var apps = APPENDICES[comp] || [];
+    for (var i = 0; i < apps.length; i++) {
+        var div = document.createElement("div");
+        div.className = "modules-block";
+        div.style.marginBottom = "12px";
+        var h = document.createElement("h4");
+        h.textContent = apps[i].module;
+        div.appendChild(h);
+        var ul = document.createElement("ul");
+        for (var j = 0; j < apps[i].items.length; j++) {
+            var li = document.createElement("li");
+            li.textContent = apps[i].items[j];
+            ul.appendChild(li);
+        }
+        div.appendChild(ul);
+        container.appendChild(div);
+    }
+}
+
+// ============================================================
+// ПЕЧАТЬ / PDF (работает во всех браузерах)
+// ============================================================
+function printTab(tabId) {
+    var tabs = ['plan', 'diag', 'diary', 'mentor', 'apps'];
+    for (var i = 0; i < tabs.length; i++) {
+        var el = document.getElementById('tab-' + tabs[i]);
+        if (el) el.classList.remove('active');
+    }
+    document.getElementById(tabId).classList.add('active');
+    setTimeout(function() { window.print(); }, 100);
+}
+</script>
+</body>
+</html>
